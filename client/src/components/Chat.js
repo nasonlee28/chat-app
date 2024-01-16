@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 
 const socket = io(
   process.env.NODE_ENV === 'production'
-    ? 'https://chat-app-nason.azurewebsites.net'
+    ? 'chat-app-nason.azurewebsites.net'
     : 'localhost:8080/',
 );
 
@@ -14,7 +14,7 @@ const Message = ({ message }) => {
       <div className={isMe ? 'me-message-name' : 'other-message-name'}>
         {message.socketId}
       </div>
-      <div className={isMe ? 'me' : 'other'}>
+      <div className={isMe ? 'me-message' : 'other-message'}>
         <div>{message.message}</div>
       </div>
     </>
@@ -23,36 +23,33 @@ const Message = ({ message }) => {
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-
-  const messageEndRef = useRef(null);
+  const [newTypingMessage, setNewTypingMessage] = useState('');
+  const [isFinishedInput, setFinishedInput] = useState(false);
 
   useEffect(() => {
-    console.log('registering callback');
-    const callback = (message) => {
-      console.log('xx message', message);
-      console.log('xx socket', socket);
-      setMessages((prevMessages) => {
-        return [...prevMessages, message];
-      });
+    const receiveMassageCallback = (message) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
     };
-    socket.on('chat', callback);
+    socket.on('chat', receiveMassageCallback);
 
     return () => {
-      socket.off('chat', callback);
+      socket.off('chat', receiveMassageCallback);
     };
   }, []);
 
   /**
    * Scroll to bottom of chat when new message is received
    */
+  const messageEndRef = useRef(null);
   useEffect(() => {
     messageEndRef.current?.scrollIntoView?.();
   }, [messages]);
 
   const sendMessage = () => {
-    socket.emit('chat', { socketId: socket.id, message: newMessage });
-    setNewMessage('');
+    if (!newTypingMessage) return;
+
+    socket.emit('chat', { socketId: socket.id, message: newTypingMessage });
+    setNewTypingMessage('');
   };
 
   return (
@@ -67,10 +64,13 @@ const Chat = () => {
         <input
           className="input"
           type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          value={newTypingMessage}
+          onChange={(e) => setNewTypingMessage(e.target.value)}
+          /** if user is not yet finished typing like Mandarin, don't send message out */
+          onCompositionStart={() => setFinishedInput(false)}
+          onBeforeInput={() => setFinishedInput(true)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && isFinishedInput) {
               sendMessage();
             }
           }}

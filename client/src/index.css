@@ -43,7 +43,7 @@ code {
   overflow-y: scroll;
 }
 
-.me {
+.me-message {
   background-color: #86d97b;
   border-radius: 5px;
   padding: 10px;
@@ -53,7 +53,7 @@ code {
   align-self: flex-end;
 }
 
-.other {
+.other-message {
   background-color: #555b5f;
   color: #fff;
   border-radius: 5px;
@@ -66,7 +66,6 @@ code {
 
 .me-message-name {
   font-size: 12px;
-  /* font-weight: bold; */
   margin-top: 10px;
   margin-right: 10px;
   margin-bottom: 5px;
@@ -75,7 +74,6 @@ code {
 
 .other-message-name {
   font-size: 12px;
-  /* font-weight: bold; */
   margin-top: 10px;
   margin-left: 10px;
   margin-bottom: 5px;
