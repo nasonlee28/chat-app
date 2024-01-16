@@ -1,36 +1,46 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
+import './Chat.css';
 
-const socket = io(
-  process.env.NODE_ENV === 'production'
-    ? 'chat-app-nason.azurewebsites.net'
-    : 'localhost:8080/',
-);
+let socket;
 
 const Message = ({ message }) => {
   const isMe = message.socketId === socket.id;
   return (
     <>
       <div className={isMe ? 'me-message-name' : 'other-message-name'}>
-        {message.socketId}
+        {message.name}
       </div>
       <div className={isMe ? 'me-message' : 'other-message'}>
         <div>{message.message}</div>
+      </div>
+      <div className={isMe ? 'me-message-time' : 'other-message-time'}>
+        {message.time}
       </div>
     </>
   );
 };
 
-const Chat = () => {
+const Chat = ({ name }) => {
   const [messages, setMessages] = useState([]);
   const [newTypingMessage, setNewTypingMessage] = useState('');
   const [isFinishedInput, setFinishedInput] = useState(false);
+  const inputRef = useRef(null);
 
   useEffect(() => {
+    socket = io(
+      process.env.NODE_ENV === 'production'
+        ? 'chat-app-nason.azurewebsites.net'
+        : 'localhost:8080',
+    );
+
     const receiveMassageCallback = (message) => {
       setMessages((prevMessages) => [...prevMessages, message]);
     };
+
     socket.on('chat', receiveMassageCallback);
+
+    inputRef.current?.focus?.();
 
     return () => {
       socket.off('chat', receiveMassageCallback);
@@ -48,7 +58,12 @@ const Chat = () => {
   const sendMessage = () => {
     if (!newTypingMessage) return;
 
-    socket.emit('chat', { socketId: socket.id, message: newTypingMessage });
+    socket.emit('chat', {
+      socketId: socket.id,
+      message: newTypingMessage,
+      name,
+      time: new Date().toLocaleTimeString(),
+    });
     setNewTypingMessage('');
   };
 
@@ -62,6 +77,7 @@ const Chat = () => {
       </div>
       <div className="edit-bar">
         <input
+          ref={inputRef}
           className="input"
           type="text"
           value={newTypingMessage}
@@ -75,7 +91,7 @@ const Chat = () => {
             }
           }}
         />
-        <button className="send" onClick={sendMessage}>
+        <button className="send-button" onClick={sendMessage}>
           Send
         </button>
       </div>
