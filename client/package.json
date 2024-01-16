@@ -16,6 +16,7 @@
   "scripts": {
     "start": "NODE_ENV=development && react-scripts start",
     "build": "NODE_ENV=production && react-scripts build",
+    "deploy": "npm run build && firebase deploy",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

@@ -2,7 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import './Chat.css';
 
-let socket;
+const socket = io(
+  process.env.NODE_ENV === 'production'
+    ? 'chat-app-nason.azurewebsites.net'
+    : 'localhost:8080',
+);
 
 const Message = ({ message }) => {
   const isMe = message.socketId === socket.id;
@@ -12,7 +16,7 @@ const Message = ({ message }) => {
         {message.name}
       </div>
       <div className={isMe ? 'me-message' : 'other-message'}>
-        <div>{message.message}</div>
+        <div>{message.text}</div>
       </div>
       <div className={isMe ? 'me-message-time' : 'other-message-time'}>
         {message.time}
@@ -24,21 +28,23 @@ const Message = ({ message }) => {
 const Chat = ({ name }) => {
   const [messages, setMessages] = useState([]);
   const [newTypingMessage, setNewTypingMessage] = useState('');
+  const [users, setUsers] = useState([]); // [{name, socketId}]
   const [isFinishedInput, setFinishedInput] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    socket = io(
-      process.env.NODE_ENV === 'production'
-        ? 'chat-app-nason.azurewebsites.net'
-        : 'localhost:8080',
-    );
-
-    const receiveMassageCallback = (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+    const receiveMassageCallback = ({ message, onlineUsers }) => {
+      setUsers(onlineUsers);
+      if (message?.text) {
+        setMessages((prevMessages) => [...prevMessages, message]);
+      }
     };
 
     socket.on('chat', receiveMassageCallback);
+    // send name to server with a delay to make sure server is ready
+    setTimeout(() => {
+      socket.emit('chat', { socketId: socket.id, name });
+    }, 100);
 
     inputRef.current?.focus?.();
 
@@ -60,7 +66,7 @@ const Chat = ({ name }) => {
 
     socket.emit('chat', {
       socketId: socket.id,
-      message: newTypingMessage,
+      text: newTypingMessage,
       name,
       time: new Date().toLocaleTimeString(),
     });
@@ -69,6 +75,10 @@ const Chat = ({ name }) => {
 
   return (
     <div className="background">
+      <div className="online-users">
+        <div className="online-users-title">Online Users: </div>
+        {users.map((user) => user.name).join(', ')}
+      </div>
       <div className="chat">
         {messages.map((msg, index) => (
           <Message key={index} message={msg} />

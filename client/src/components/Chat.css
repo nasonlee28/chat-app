@@ -92,3 +92,17 @@
   margin-bottom: 5px;
   align-self: flex-start;
 }
+
+.online-users {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  font-size: 12px;
+  margin-bottom: 10px;
+  overflow-y: scroll;
+}
+
+.online-users-title {
+  margin-right: 10px;
+}
